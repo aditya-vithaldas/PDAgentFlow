@@ -2,6 +2,11 @@ import { TEMPLATES } from '../data/templates';
 import { AGENT_MAP } from '../data/agents';
 import { callGemini } from './gemini';
 
+/** Run a promise but ensure at least `ms` milliseconds pass before resolving. */
+function withMinDelay(promise, ms) {
+  return Promise.all([promise, new Promise((r) => setTimeout(r, ms))]).then(([result]) => result);
+}
+
 function detectTemplate(input) {
   const lower = input.toLowerCase();
   if (lower.includes('nda') || lower.includes('non-disclosure') || lower.includes('confidential')) return 'nda';
@@ -72,8 +77,9 @@ User's request: "${input}"
 ${contextSoFar ? `Previously generated sections for context:\n${contextSoFar}\n\n` : ''}Write the content for this section now. Output only the section text, no heading.`;
 
     let content;
+    const sectionDelay = 1500 + Math.random() * 1000; // 1.5–2.5s minimum
     try {
-      content = await callGemini(agentSystemPrompt(section.agent), userPrompt);
+      content = await withMinDelay(callGemini(agentSystemPrompt(section.agent), userPrompt), sectionDelay);
     } catch (err) {
       console.error(`Gemini error for section ${section.title}:`, err);
       content = section.content; // fallback to template
@@ -92,11 +98,10 @@ ${contextSoFar ? `Previously generated sections for context:\n${contextSoFar}\n\
   const fullDoc = generatedSections.map((gs) => `### ${gs.title}\n${gs.content}`).join('\n\n');
 
   try {
-    const reviewResult = await callGemini(
+    const reviewResult = await withMinDelay(callGemini(
       agentSystemPrompt('quality'),
       `Review this complete ${template.title} for internal contradictions, undefined terms, ambiguous language, missing cross-references, and overall coherence. If everything looks good, say "All sections verified." Otherwise list the issues briefly.\n\n${fullDoc}`
-    );
-    // We don't modify sections here, just log the review
+    ), 2000);
     console.log('Quality review:', reviewResult);
   } catch (err) {
     console.error('Quality review failed:', err);
@@ -134,7 +139,7 @@ export async function runEdit(editRequest, currentDoc, callbacks) {
     .join('\n');
 
   try {
-    const routingResult = await callGemini(
+    const routingResult = await withMinDelay(callGemini(
       `You are the Chief of Staff routing agent. Given a user's edit request and a list of document sections, determine which section should be modified. Respond in EXACTLY this format (two lines, nothing else):
 SECTION_INDEX: <number>
 SUMMARY: <one sentence describing what will change>`,
@@ -144,7 +149,7 @@ Document sections:
 ${sectionList}
 
 Which section index should be edited, and what is the change summary?`
-    );
+    ), 1500);
 
     const idxMatch = routingResult.match(/SECTION_INDEX:\s*(\d+)/);
     const summaryMatch = routingResult.match(/SUMMARY:\s*(.+)/);
@@ -169,7 +174,7 @@ Which section index should be edited, and what is the change summary?`
 
   let newContent;
   try {
-    newContent = await callGemini(
+    newContent = await withMinDelay(callGemini(
       agentSystemPrompt(section.agent),
       `You are rewriting a section of a ${currentDoc.title}.
 
@@ -180,7 +185,7 @@ ${section.content}
 User's edit request: "${editRequest}"
 
 Rewrite the section incorporating the user's requested change. Keep the same overall structure and [PLACEHOLDER] format. Output only the revised section text, no heading.`
-    );
+    ), 2000);
   } catch (err) {
     console.error('Section rewrite failed:', err);
     newContent = section.content; // keep original on failure
@@ -193,10 +198,10 @@ Rewrite the section incorporating the user's requested change. Keep the same ove
   callbacks.onActiveAgent('quality', `Verifying edit in "${section.title}"`);
 
   try {
-    await callGemini(
+    await withMinDelay(callGemini(
       agentSystemPrompt('quality'),
       `Verify this edited section is consistent and well-formed:\n\nSection: "${section.title}"\nContent:\n${newContent}\n\nRespond briefly.`
-    );
+    ), 1500);
   } catch (err) {
     console.error('Quality review of edit failed:', err);
   }
