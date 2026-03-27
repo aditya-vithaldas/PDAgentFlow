@@ -1,0 +1,132 @@
+import { useState } from 'react';
+import { AGENTS } from '../data/agents';
+
+function AgentInfoPopover({ agent, onClose }) {
+  const { info } = agent;
+  return (
+    <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-72 bg-slate-900 border border-slate-600 rounded-xl shadow-2xl z-50 p-4 text-left">
+      <div className="absolute -top-2 left-1/2 -translate-x-1/2 w-3 h-3 bg-slate-900 border-l border-t border-slate-600 rotate-45" />
+      <div className="flex items-center justify-between mb-3">
+        <h4 className="text-sm font-bold text-white">{agent.name}</h4>
+        <button onClick={onClose} className="text-slate-400 hover:text-white cursor-pointer">
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+      <div className="space-y-2.5">
+        {[['Role', info.role], ['Personality', info.personality], ['Instructions', info.instructions], ['Output', info.output]].map(([label, text]) => (
+          <div key={label}>
+            <div className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-0.5">{label}</div>
+            <p className="text-xs text-slate-300 leading-relaxed">{text}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// Agent states: 'idle' | 'active' | 'complete'
+export default function AgentBar({ activeAgents, completedAgents = [], activeTask }) {
+  const [openPopover, setOpenPopover] = useState(null);
+
+  return (
+    <div className="bg-slate-800 border-b border-slate-700 relative z-20 overflow-visible">
+      <div className="flex items-center gap-2 px-4 py-2.5">
+        <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mr-1 flex-shrink-0">Agents</span>
+        {AGENTS.map((agent) => {
+          const isActive = activeAgents.includes(agent.id);
+          const isComplete = completedAgents.includes(agent.id);
+
+          // Style: active = border glow + flash, complete = green, idle = clear/visible
+          let pillClasses, iconBg, nameColor;
+          if (isActive) {
+            pillClasses = `${agent.tailwind.border} bg-slate-700/60 agent-active ring-2 ${agent.tailwind.ring}`;
+            iconBg = { backgroundColor: agent.color };
+            nameColor = 'text-white';
+          } else if (isComplete) {
+            pillClasses = 'border-emerald-500/50 bg-emerald-900/20';
+            iconBg = { backgroundColor: '#10b981' };
+            nameColor = 'text-emerald-300';
+          } else {
+            pillClasses = 'border-slate-500/40 bg-slate-700/20';
+            iconBg = { backgroundColor: '#475569' }; // slate-600
+            nameColor = 'text-slate-200';
+          }
+
+          return (
+            <div key={agent.id} className="relative flex-shrink-0">
+              <div className={`flex items-center gap-2 px-2.5 py-1.5 rounded-full border transition-all duration-300 ${pillClasses}`}>
+                <div
+                  className="w-5 h-5 rounded-full flex items-center justify-center transition-all duration-300 text-white"
+                  style={iconBg}
+                >
+                  {isComplete ? (
+                    <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                    </svg>
+                  ) : (
+                    <AgentIcon id={agent.id} />
+                  )}
+                </div>
+                <div className="text-left">
+                  <div className={`text-[11px] font-semibold leading-tight ${nameColor}`}>
+                    {agent.name}
+                  </div>
+                  <div className={`text-[10px] leading-tight ${isActive ? 'text-slate-400' : isComplete ? 'text-emerald-400/60' : 'text-slate-400'}`}>
+                    {agent.shortDesc}
+                  </div>
+                </div>
+                {isActive && (
+                  <span className="relative flex h-2 w-2 ml-0.5">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75" style={{ backgroundColor: agent.color }} />
+                    <span className="relative inline-flex rounded-full h-2 w-2" style={{ backgroundColor: agent.color }} />
+                  </span>
+                )}
+                {/* Info icon */}
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setOpenPopover(openPopover === agent.id ? null : agent.id);
+                  }}
+                  className="ml-0.5 w-4 h-4 rounded-full flex items-center justify-center text-slate-500 hover:text-slate-200 hover:bg-slate-600 transition-colors cursor-pointer flex-shrink-0"
+                >
+                  <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </button>
+              </div>
+              {openPopover === agent.id && (
+                <AgentInfoPopover agent={agent} onClose={() => setOpenPopover(null)} />
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      {activeTask && (
+        <div className="px-4 pb-2 flex items-center gap-2">
+          <svg className="w-3 h-3 text-slate-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+          </svg>
+          <p className="text-xs text-slate-400 truncate">{activeTask}</p>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function AgentIcon({ id }) {
+  const icons = {
+    chief: <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />,
+    termination: <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />,
+    realestate: <path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-4 0a1 1 0 01-1-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 01-1 1" />,
+    pricing: <path strokeLinecap="round" strokeLinejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />,
+    quality: <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />,
+  };
+  return (
+    <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+      {icons[id]}
+    </svg>
+  );
+}

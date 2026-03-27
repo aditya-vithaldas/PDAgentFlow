@@ -1,0 +1,65 @@
+@import "tailwindcss";
+
+@theme {
+  --color-slate-25: #fcfcfd;
+  --color-agent-chief: #6366f1;
+  --color-agent-termination: #f59e0b;
+  --color-agent-realestate: #10b981;
+  --color-agent-pricing: #ec4899;
+  --color-agent-quality: #8b5cf6;
+}
+
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.4); }
+  50% { box-shadow: 0 0 16px 4px rgba(99, 102, 241, 0.25); }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes typing-dot {
+  0%, 60%, 100% { opacity: 0.3; transform: translateY(0); }
+  30% { opacity: 1; transform: translateY(-4px); }
+}
+
+.agent-active {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+.section-loading {
+  position: relative;
+}
+
+.section-loading::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent 0%, rgba(99,102,241,0.06) 25%, rgba(99,102,241,0.12) 50%, rgba(99,102,241,0.06) 75%, transparent 100%);
+  background-size: 200% 100%;
+  animation: shimmer 2s ease-in-out infinite;
+  border-radius: 8px;
+  pointer-events: none;
+}
+
+.section-loading[data-agent="termination"]::after {
+  background: linear-gradient(90deg, transparent 0%, rgba(245,158,11,0.06) 25%, rgba(245,158,11,0.12) 50%, rgba(245,158,11,0.06) 75%, transparent 100%);
+  background-size: 200% 100%; animation: shimmer 2s ease-in-out infinite;
+}
+.section-loading[data-agent="realestate"]::after {
+  background: linear-gradient(90deg, transparent 0%, rgba(16,185,129,0.06) 25%, rgba(16,185,129,0.12) 50%, rgba(16,185,129,0.06) 75%, transparent 100%);
+  background-size: 200% 100%; animation: shimmer 2s ease-in-out infinite;
+}
+.section-loading[data-agent="pricing"]::after {
+  background: linear-gradient(90deg, transparent 0%, rgba(236,72,153,0.06) 25%, rgba(236,72,153,0.12) 50%, rgba(236,72,153,0.06) 75%, transparent 100%);
+  background-size: 200% 100%; animation: shimmer 2s ease-in-out infinite;
+}
+.section-loading[data-agent="quality"]::after {
+  background: linear-gradient(90deg, transparent 0%, rgba(139,92,246,0.06) 25%, rgba(139,92,246,0.12) 50%, rgba(139,92,246,0.06) 75%, transparent 100%);
+  background-size: 200% 100%; animation: shimmer 2s ease-in-out infinite;
+}
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #d1d5db transparent;
+}
