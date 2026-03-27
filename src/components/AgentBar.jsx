@@ -4,25 +4,34 @@ import { AGENTS } from '../data/agents';
 function AgentInfoPopover({ agent, onClose }) {
   const { info } = agent;
   return (
-    <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-72 bg-slate-900 border border-slate-600 rounded-xl shadow-2xl z-50 p-4 text-left">
-      <div className="absolute -top-2 left-1/2 -translate-x-1/2 w-3 h-3 bg-slate-900 border-l border-t border-slate-600 rotate-45" />
-      <div className="flex items-center justify-between mb-3">
-        <h4 className="text-sm font-bold text-white">{agent.name}</h4>
-        <button onClick={onClose} className="text-slate-400 hover:text-white cursor-pointer">
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-          </svg>
-        </button>
-      </div>
-      <div className="space-y-2.5">
-        {[['Role', info.role], ['Personality', info.personality], ['Instructions', info.instructions], ['Output', info.output]].map(([label, text]) => (
-          <div key={label}>
-            <div className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-0.5">{label}</div>
-            <p className="text-xs text-slate-300 leading-relaxed">{text}</p>
+    <>
+      {/* Backdrop */}
+      <div className="fixed inset-0 z-[60]" onClick={onClose} />
+      {/* Popover card — fixed center-top */}
+      <div className="fixed top-16 left-1/2 -translate-x-1/2 w-80 bg-slate-900 border border-slate-600 rounded-xl shadow-2xl z-[70] p-5 text-left max-h-[70vh] overflow-y-auto">
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2">
+            <div className="w-6 h-6 rounded-full flex items-center justify-center text-white" style={{ backgroundColor: agent.color }}>
+              <AgentIcon id={agent.id} />
+            </div>
+            <h4 className="text-sm font-bold text-white">{agent.name}</h4>
           </div>
-        ))}
+          <button onClick={onClose} className="text-slate-400 hover:text-white cursor-pointer">
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+        <div className="space-y-2.5">
+          {[['Role', info.role], ['Personality', info.personality], ['Instructions', info.instructions], ['Output', info.output]].map(([label, text]) => (
+            <div key={label}>
+              <div className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-0.5">{label}</div>
+              <p className="text-xs text-slate-300 leading-relaxed">{text}</p>
+            </div>
+          ))}
+        </div>
       </div>
-    </div>
+    </>
   );
 }
 
