@@ -1,20 +1,14 @@
 import { useEffect, useRef, useState } from 'react';
 import { AGENT_MAP } from '../data/agents';
 
-// Render text with [VARIABLE_NAME] as inline editable fields
 function TemplateText({ text }) {
   if (!text) return null;
-
-  // Split on [VARIABLE_NAME] pattern
   const parts = text.split(/(\[[A-Z_]+\])/g);
-
   return (
     <>
       {parts.map((part, i) => {
         const match = part.match(/^\[([A-Z_]+)\]$/);
-        if (match) {
-          return <TemplateField key={i} name={match[1]} />;
-        }
+        if (match) return <TemplateField key={i} name={match[1]} />;
         return <span key={i}>{part}</span>;
       })}
     </>
@@ -23,38 +17,46 @@ function TemplateText({ text }) {
 
 function TemplateField({ name }) {
   const [value, setValue] = useState('');
+  const [editing, setEditing] = useState(false);
+  const inputRef = useRef(null);
   const label = name.replace(/_/g, ' ').toLowerCase();
 
+  useEffect(() => {
+    if (editing && inputRef.current) inputRef.current.focus();
+  }, [editing]);
+
+  if (editing || value) {
+    return (
+      <input
+        ref={inputRef}
+        type="text"
+        value={value}
+        placeholder={label}
+        onChange={(e) => setValue(e.target.value)}
+        onBlur={() => { if (!value) setEditing(false); }}
+        className="inline bg-transparent border-b-2 border-indigo-300 text-indigo-700 font-medium px-0.5 min-w-[60px] text-sm focus:outline-none focus:border-indigo-500"
+        style={{ width: `${Math.max(value.length || label.length, 8)}ch` }}
+      />
+    );
+  }
+
   return (
-    <span className="inline-flex items-center">
-      {value ? (
-        <input
-          type="text"
-          value={value}
-          onChange={(e) => setValue(e.target.value)}
-          className="inline bg-transparent border-b border-indigo-300 text-indigo-700 font-medium px-0.5 min-w-[60px] text-sm focus:outline-none focus:border-indigo-500"
-          style={{ width: `${Math.max(value.length, 8)}ch` }}
-        />
-      ) : (
-        <button
-          onClick={() => setValue('')}
-          className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-amber-50 border border-amber-200 text-amber-700 text-xs font-medium hover:bg-amber-100 transition-colors cursor-pointer"
-        >
-          <svg className="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-          </svg>
-          {label}
-        </button>
-      )}
-    </span>
+    <button
+      onClick={() => setEditing(true)}
+      className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-amber-50 border border-amber-200 text-amber-700 text-xs font-medium hover:bg-amber-100 transition-colors cursor-pointer"
+    >
+      <svg className="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+      </svg>
+      {label}
+    </button>
   );
 }
 
-export default function DocumentPane({ document, hasStarted, activeSectionIdx }) {
+export default function DocumentPane({ document, hasStarted, activeSectionIdx, qualityReviewActive }) {
   const sectionRefs = useRef({});
   const scrollContainerRef = useRef(null);
 
-  // Auto-scroll to active section
   useEffect(() => {
     if (activeSectionIdx >= 0 && sectionRefs.current[activeSectionIdx] && scrollContainerRef.current) {
       sectionRefs.current[activeSectionIdx].scrollIntoView({
@@ -98,7 +100,12 @@ export default function DocumentPane({ document, hasStarted, activeSectionIdx })
       </div>
 
       {/* Document body */}
-      <div ref={scrollContainerRef} className="flex-1 overflow-y-auto px-8 py-6">
+      <div ref={scrollContainerRef} className="flex-1 overflow-y-auto px-8 py-6 relative">
+        {/* Quality review overlay — shimmer across the entire document */}
+        {qualityReviewActive && (
+          <div className="absolute inset-0 z-10 pointer-events-none section-loading rounded-none" data-agent="quality" />
+        )}
+
         <div className="max-w-2xl mx-auto space-y-5">
           {document.sections.map((section, idx) => {
             const agent = AGENT_MAP[section.agent];
@@ -119,7 +126,6 @@ export default function DocumentPane({ document, hasStarted, activeSectionIdx })
                 }`}
                 data-agent={section.agent}
               >
-                {/* Section header */}
                 <div className="flex items-center justify-between mb-2">
                   <h3 className="text-sm font-semibold text-slate-800">{section.title}</h3>
                   {section.status === 'loading' && (
@@ -141,7 +147,6 @@ export default function DocumentPane({ document, hasStarted, activeSectionIdx })
                   )}
                 </div>
 
-                {/* Section content */}
                 {section.status === 'loading' && (
                   <div className="flex items-center gap-2 py-3">
                     <div className="flex gap-1">

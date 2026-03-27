@@ -41,15 +41,8 @@ Termination for breach requires [CURE_DAYS] days to cure. Confidentiality obliga
 The Receiving Party shall indemnify the Disclosing Party for all losses arising from breach, including reasonable attorney's fees.`,
       },
       {
-        id: 'quality-review',
-        title: '5. Quality Review',
-        agent: 'quality',
-        agentTask: 'Verifying consistency and cross-references',
-        content: `All section cross-references verified. Defined terms are consistent throughout. Termination survival period does not conflict with base term. Remedies are complementary, not contradictory.`,
-      },
-      {
         id: 'signatures',
-        title: '6. Signatures',
+        title: '5. Signatures',
         agent: 'chief',
         agentTask: 'Preparing signature blocks',
         content: `IN WITNESS WHEREOF, the Parties have executed this Agreement as of the date last written below.
@@ -114,15 +107,8 @@ Buyer shall obtain financing of $[LOAN_AMOUNT] at a rate not exceeding [INTEREST
 Either Party may terminate mutually in writing. Contingency failures entitle Buyer to a full earnest money refund.`,
       },
       {
-        id: 'quality-review',
-        title: '6. Quality Review',
-        agent: 'quality',
-        agentTask: 'Verifying financial consistency and completeness',
-        content: `Financial amounts cross-referenced correctly. Timeline logic verified: inspection, title, and financing deadlines are non-overlapping. Default remedies are distinct for each party.`,
-      },
-      {
         id: 'signatures',
-        title: '7. Signatures',
+        title: '6. Signatures',
         agent: 'chief',
         agentTask: 'Preparing signature blocks',
         content: `Seller: [SELLER_NAME]
@@ -176,15 +162,8 @@ Credits cap at 50% of monthly fee. Late payments accrue interest at [LATE_INTERE
 Termination for cause: 30 days to cure. Termination for convenience: [CONVENIENCE_NOTICE_DAYS] days' notice plus early termination fee of [EARLY_TERM_FEE_MONTHS] months' fee.`,
       },
       {
-        id: 'quality-review',
-        title: '5. Quality Review',
-        agent: 'quality',
-        agentTask: 'Checking metric consistency and clause coherence',
-        content: `Uptime math verified against resolution targets. Credit tiers are non-overlapping and capped. Renewal and termination notice periods are distinct and non-conflicting.`,
-      },
-      {
         id: 'signatures',
-        title: '6. Signatures',
+        title: '5. Signatures',
         agent: 'chief',
         agentTask: 'Preparing signature blocks',
         content: `Provider: [PROVIDER_NAME]

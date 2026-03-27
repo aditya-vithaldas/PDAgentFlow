@@ -13,6 +13,7 @@ export default function App() {
   const [completedAgents, setCompletedAgents] = useState([]);
   const [activeTask, setActiveTask] = useState(null);
   const [activeSectionIdx, setActiveSectionIdx] = useState(-1);
+  const [qualityReviewActive, setQualityReviewActive] = useState(false);
   const generatingRef = useRef(false);
 
   const handleSendMessage = useCallback(
@@ -32,6 +33,7 @@ export default function App() {
       setIsGenerating(true);
       setCompletedAgents([]);
       setActiveAgents([]);
+      setQualityReviewActive(false);
 
       await runGeneration(content, {
         onDocumentInit(doc) {
@@ -72,6 +74,15 @@ export default function App() {
           );
         },
 
+        onQualityReviewStart() {
+          setQualityReviewActive(true);
+          setActiveSectionIdx(-1); // no specific section — whole doc
+        },
+
+        onQualityReviewDone() {
+          setQualityReviewActive(false);
+        },
+
         onChatMessage(msg) {
           setMessages((prev) => [...prev, msg]);
         },
@@ -105,6 +116,7 @@ export default function App() {
           document={document}
           hasStarted={hasStarted}
           activeSectionIdx={activeSectionIdx}
+          qualityReviewActive={qualityReviewActive}
         />
       </div>
     </div>

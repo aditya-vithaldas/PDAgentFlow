@@ -10,7 +10,10 @@ function detectTemplate(input) {
 
 /**
  * Run document generation.
- * No live streaming — each section shows a "working" state, then reveals content when done.
+ *
+ * Phases:
+ *   1. Specialist agents write sections one at a time
+ *   2. Quality Review agent does a full-document verification pass (no section of its own)
  */
 export async function runGeneration(input, callbacks) {
   const templateKey = detectTemplate(input);
@@ -35,30 +38,33 @@ export async function runGeneration(input, callbacks) {
 
   await delay(600);
 
+  // Phase 1: Write each section
   for (let i = 0; i < doc.sections.length; i++) {
     const section = template.sections[i];
 
-    // Activate agent
     callbacks.onActiveAgent(section.agent, section.agentTask);
-
-    // Mark section as loading (shows the "working on" indicator)
     callbacks.onSectionStart(i);
 
-    // Simulate work — slower so user can see what's happening
     await delay(2000 + Math.random() * 1000);
 
-    // Reveal content and mark done
     callbacks.onSectionDone(i, section.content);
-
-    // Mark agent as completed
     callbacks.onAgentComplete(section.agent);
 
     await delay(400);
   }
 
+  // Phase 2: Quality Review — full-document verification pass
+  callbacks.onActiveAgent('quality', 'Reviewing full document for consistency, contradictions, and completeness');
+  callbacks.onQualityReviewStart();
+
+  await delay(2500);
+
+  callbacks.onQualityReviewDone();
+  callbacks.onAgentComplete('quality');
+
   callbacks.onChatMessage({
     role: 'assistant',
-    content: `Your ${template.title} is ready! Fill in the highlighted fields to complete the document.`,
+    content: `Your ${template.title} is ready! Quality Review verified all sections for consistency. Fill in the highlighted fields to complete the document.`,
   });
 
   callbacks.onActiveAgent(null, null);
