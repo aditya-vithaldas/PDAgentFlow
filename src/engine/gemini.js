@@ -11,7 +11,8 @@ export async function callGemini(systemPrompt, userPrompt) {
       contents: [{ role: 'user', parts: [{ text: userPrompt }] }],
       generationConfig: {
         temperature: 0.7,
-        maxOutputTokens: 1024,
+        maxOutputTokens: 8192,
+        thinkingConfig: { thinkingBudget: 1024 },
       },
     }),
   });
@@ -22,5 +23,9 @@ export async function callGemini(systemPrompt, userPrompt) {
   }
 
   const data = await res.json();
-  return data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+
+  // Gemini 3 Flash (thinking model) may return multiple parts — find the text part
+  const parts = data.candidates?.[0]?.content?.parts || [];
+  const textPart = parts.find((p) => p.text && !p.thoughtSignature);
+  return textPart?.text || parts[0]?.text || '';
 }

@@ -82,9 +82,10 @@ export async function runGeneration(input, callbacks) {
     await delay(1000);
     callbacks.onSectionStart(i);
 
+    // Send only section titles + first 150 chars as context (avoid token bloat)
     const contextSoFar = generatedSections
-      .map((gs) => `### ${gs.title}\n${gs.content}`)
-      .join('\n\n');
+      .map((gs) => `- ${gs.title}: ${gs.content.slice(0, 150)}...`)
+      .join('\n');
 
     const userPrompt = `Document type: ${template.title}
 Section to write: "${section.title}"
