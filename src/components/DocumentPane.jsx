@@ -53,7 +53,7 @@ function TemplateField({ name }) {
   );
 }
 
-export default function DocumentPane({ document, hasStarted, activeSectionIdx, qualityReviewActive }) {
+export default function DocumentPane({ document, hasStarted, activeSectionIdx, qualityReviewActive, changedSections = {} }) {
   const sectionRefs = useRef({});
   const scrollContainerRef = useRef(null);
 
@@ -112,6 +112,8 @@ export default function DocumentPane({ document, hasStarted, activeSectionIdx, q
             const agentColor = agent?.color || '#6366f1';
             const agentName = agent?.name || section.agent;
             const colorClasses = getAgentColorClasses(section.agent);
+            const isChanged = idx in changedSections;
+            const diffSummary = changedSections[idx];
 
             return (
               <div
@@ -120,32 +122,56 @@ export default function DocumentPane({ document, hasStarted, activeSectionIdx, q
                 className={`relative rounded-lg border p-5 transition-all duration-500 ${
                   section.status === 'loading'
                     ? `${colorClasses.border} section-loading`
+                    : section.status === 'done' && isChanged
+                    ? 'border-indigo-300 bg-indigo-50/30 ring-1 ring-indigo-200'
                     : section.status === 'done'
                     ? 'border-slate-200'
                     : 'border-slate-100 bg-slate-50/50'
                 }`}
                 data-agent={section.agent}
               >
+                {/* Changed indicator — left accent bar */}
+                {isChanged && section.status === 'done' && (
+                  <div className="absolute left-0 top-3 bottom-3 w-1 rounded-full bg-indigo-500" />
+                )}
+
                 <div className="flex items-center justify-between mb-2">
                   <h3 className="text-sm font-semibold text-slate-800">{section.title}</h3>
-                  {section.status === 'loading' && (
-                    <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-medium ${colorClasses.bg} ${colorClasses.text}`}>
-                      <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ backgroundColor: agentColor }} />
-                      {agentName}
-                    </span>
-                  )}
-                  {section.status === 'done' && (
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-emerald-50 text-emerald-600">
-                      <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                      </svg>
-                      Complete
-                    </span>
-                  )}
-                  {section.status === 'pending' && (
-                    <span className="text-[10px] text-slate-300">Queued</span>
-                  )}
+                  <div className="flex items-center gap-1.5">
+                    {section.status === 'loading' && (
+                      <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-medium ${colorClasses.bg} ${colorClasses.text}`}>
+                        <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ backgroundColor: agentColor }} />
+                        {agentName}
+                      </span>
+                    )}
+                    {section.status === 'done' && isChanged && (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-indigo-100 text-indigo-700 animate-fade-in">
+                        <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                        </svg>
+                        Updated
+                      </span>
+                    )}
+                    {section.status === 'done' && !isChanged && (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-emerald-50 text-emerald-600">
+                        <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                        </svg>
+                        Complete
+                      </span>
+                    )}
+                    {section.status === 'pending' && (
+                      <span className="text-[10px] text-slate-300">Queued</span>
+                    )}
+                  </div>
                 </div>
+
+                {/* Diff summary blurb */}
+                {isChanged && section.status === 'done' && diffSummary && (
+                  <div className="mb-3 px-3 py-2 rounded-md bg-indigo-50 border border-indigo-200 text-xs text-indigo-700 animate-fade-in">
+                    <span className="font-semibold">Change:</span> {diffSummary}
+                  </div>
+                )}
 
                 {section.status === 'loading' && (
                   <div className="flex items-center gap-2 py-3">

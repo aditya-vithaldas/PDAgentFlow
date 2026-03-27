@@ -28,88 +28,120 @@ function AgentInfoPopover({ agent, onClose }) {
 
 // Agent states: 'idle' | 'active' | 'complete'
 export default function AgentBar({ activeAgents, completedAgents = [], activeTask }) {
+  const [expanded, setExpanded] = useState(false);
   const [openPopover, setOpenPopover] = useState(null);
+
+  const hasActivity = activeAgents.length > 0 || completedAgents.length > 0;
 
   return (
     <div className="bg-slate-800 border-b border-slate-700 relative z-20 overflow-visible">
-      <div className="flex items-center gap-2 px-4 py-2.5">
-        <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mr-1 flex-shrink-0">Agents</span>
-        {AGENTS.map((agent) => {
-          const isActive = activeAgents.includes(agent.id);
-          const isComplete = completedAgents.includes(agent.id);
-
-          // Style: active = border glow + flash, complete = green, idle = clear/visible
-          let pillClasses, iconBg, nameColor;
-          if (isActive) {
-            pillClasses = `${agent.tailwind.border} bg-slate-700/60 agent-active ring-2 ${agent.tailwind.ring}`;
-            iconBg = { backgroundColor: agent.color };
-            nameColor = 'text-white';
-          } else if (isComplete) {
-            pillClasses = 'border-emerald-500/50 bg-emerald-900/20';
-            iconBg = { backgroundColor: '#10b981' };
-            nameColor = 'text-emerald-300';
-          } else {
-            pillClasses = 'border-slate-500/40 bg-slate-700/20';
-            iconBg = { backgroundColor: '#475569' }; // slate-600
-            nameColor = 'text-slate-200';
-          }
-
-          return (
-            <div key={agent.id} className="relative flex-shrink-0">
-              <div className={`flex items-center gap-2 px-2.5 py-1.5 rounded-full border transition-all duration-300 ${pillClasses}`}>
-                <div
-                  className="w-5 h-5 rounded-full flex items-center justify-center transition-all duration-300 text-white"
-                  style={iconBg}
-                >
-                  {isComplete ? (
-                    <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                    </svg>
-                  ) : (
-                    <AgentIcon id={agent.id} />
-                  )}
-                </div>
-                <div className="text-left">
-                  <div className={`text-[11px] font-semibold leading-tight ${nameColor}`}>
-                    {agent.name}
-                  </div>
-                  <div className={`text-[10px] leading-tight ${isActive ? 'text-slate-400' : isComplete ? 'text-emerald-400/60' : 'text-slate-400'}`}>
-                    {agent.shortDesc}
-                  </div>
-                </div>
-                {isActive && (
-                  <span className="relative flex h-2 w-2 ml-0.5">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75" style={{ backgroundColor: agent.color }} />
-                    <span className="relative inline-flex rounded-full h-2 w-2" style={{ backgroundColor: agent.color }} />
-                  </span>
-                )}
-                {/* Info icon */}
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setOpenPopover(openPopover === agent.id ? null : agent.id);
-                  }}
-                  className="ml-0.5 w-4 h-4 rounded-full flex items-center justify-center text-slate-500 hover:text-slate-200 hover:bg-slate-600 transition-colors cursor-pointer flex-shrink-0"
-                >
-                  <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                </button>
-              </div>
-              {openPopover === agent.id && (
-                <AgentInfoPopover agent={agent} onClose={() => setOpenPopover(null)} />
-              )}
-            </div>
-          );
-        })}
+      {/* Collapsed bar — always visible */}
+      <div className="flex items-center justify-between px-4 py-2.5">
+        <div className="flex items-center gap-2 min-w-0">
+          <svg className="w-4 h-4 text-slate-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 014.5 0m0 0v5.714a2.25 2.25 0 00.659 1.591L19 14.5M14.25 3.104c.251.023.501.05.75.082M19 14.5l-2.47-2.47" />
+          </svg>
+          {activeTask ? (
+            <p className="text-xs text-slate-300 truncate">
+              <span className="text-slate-500 mr-1">Agent:</span>{activeTask}
+            </p>
+          ) : hasActivity ? (
+            <p className="text-xs text-slate-400">
+              {completedAgents.length} agent{completedAgents.length !== 1 ? 's' : ''} completed
+            </p>
+          ) : (
+            <p className="text-xs text-slate-500">Agents standing by</p>
+          )}
+          {activeAgents.length > 0 && (
+            <span className="relative flex h-2 w-2 flex-shrink-0">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75" />
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-indigo-500" />
+            </span>
+          )}
+        </div>
+        <button
+          onClick={() => setExpanded(!expanded)}
+          className="text-[10px] font-medium text-indigo-400 hover:text-indigo-300 transition-colors cursor-pointer flex items-center gap-1 flex-shrink-0"
+        >
+          {expanded ? 'Hide' : 'See what your agents are doing'}
+          <svg className={`w-3 h-3 transition-transform ${expanded ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+          </svg>
+        </button>
       </div>
 
-      {activeTask && (
-        <div className="px-4 pb-2 flex items-center gap-2">
-          <svg className="w-3 h-3 text-slate-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
-          </svg>
-          <p className="text-xs text-slate-400 truncate">{activeTask}</p>
+      {/* Expanded agent diagnostic panel */}
+      {expanded && (
+        <div className="px-4 pb-3 pt-1 border-t border-slate-700/50 animate-fade-in">
+          <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-2">Agent Diagnostic</p>
+          <div className="flex items-center gap-2 flex-wrap">
+            {AGENTS.map((agent) => {
+              const isActive = activeAgents.includes(agent.id);
+              const isComplete = completedAgents.includes(agent.id);
+
+              let pillClasses, iconBg, nameColor;
+              if (isActive) {
+                pillClasses = `${agent.tailwind.border} bg-slate-700/60 agent-active ring-2 ${agent.tailwind.ring}`;
+                iconBg = { backgroundColor: agent.color };
+                nameColor = 'text-white';
+              } else if (isComplete) {
+                pillClasses = 'border-emerald-500/50 bg-emerald-900/20';
+                iconBg = { backgroundColor: '#10b981' };
+                nameColor = 'text-emerald-300';
+              } else {
+                pillClasses = 'border-slate-500/40 bg-slate-700/20';
+                iconBg = { backgroundColor: '#475569' };
+                nameColor = 'text-slate-200';
+              }
+
+              return (
+                <div key={agent.id} className="relative flex-shrink-0">
+                  <div className={`flex items-center gap-2 px-2.5 py-1.5 rounded-full border transition-all duration-300 ${pillClasses}`}>
+                    <div
+                      className="w-5 h-5 rounded-full flex items-center justify-center transition-all duration-300 text-white"
+                      style={iconBg}
+                    >
+                      {isComplete ? (
+                        <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                        </svg>
+                      ) : (
+                        <AgentIcon id={agent.id} />
+                      )}
+                    </div>
+                    <div className="text-left">
+                      <div className={`text-[11px] font-semibold leading-tight ${nameColor}`}>
+                        {agent.name}
+                      </div>
+                      <div className={`text-[10px] leading-tight ${isActive ? 'text-slate-400' : isComplete ? 'text-emerald-400/60' : 'text-slate-400'}`}>
+                        {agent.shortDesc}
+                      </div>
+                    </div>
+                    {isActive && (
+                      <span className="relative flex h-2 w-2 ml-0.5">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75" style={{ backgroundColor: agent.color }} />
+                        <span className="relative inline-flex rounded-full h-2 w-2" style={{ backgroundColor: agent.color }} />
+                      </span>
+                    )}
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setOpenPopover(openPopover === agent.id ? null : agent.id);
+                      }}
+                      className="ml-0.5 w-4 h-4 rounded-full flex items-center justify-center text-slate-500 hover:text-slate-200 hover:bg-slate-600 transition-colors cursor-pointer flex-shrink-0"
+                    >
+                      <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                    </button>
+                  </div>
+                  {openPopover === agent.id && (
+                    <AgentInfoPopover agent={agent} onClose={() => setOpenPopover(null)} />
+                  )}
+                </div>
+              );
+            })}
+          </div>
         </div>
       )}
     </div>

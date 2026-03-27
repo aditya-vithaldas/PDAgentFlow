@@ -18,12 +18,14 @@ const SEED_SUGGESTIONS = [
   },
 ];
 
-export default function ChatPanel({ messages, onSendMessage, isGenerating }) {
+export default function ChatPanel({ messages, onSendMessage, isGenerating, documentReady, showEditHint, onDismissHint }) {
   const [input, setInput] = useState('');
+  const chatEnabled = documentReady && !isGenerating;
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!input.trim()) return;
+    if (!input.trim() || !chatEnabled) return;
+    if (showEditHint && onDismissHint) onDismissHint();
     onSendMessage(input.trim());
     setInput('');
   };
@@ -37,7 +39,9 @@ export default function ChatPanel({ messages, onSendMessage, isGenerating }) {
       {/* Chat header */}
       <div className="px-5 py-4 border-b border-slate-200 bg-white">
         <h2 className="text-sm font-semibold text-slate-800">Document Chat</h2>
-        <p className="text-xs text-slate-400 mt-0.5">Describe the document you need</p>
+        <p className="text-xs text-slate-400 mt-0.5">
+          {documentReady ? 'Type changes to edit your document' : 'Select a document type to get started'}
+        </p>
       </div>
 
       {/* Messages area */}
@@ -53,18 +57,19 @@ export default function ChatPanel({ messages, onSendMessage, isGenerating }) {
               </div>
               <div className="bg-white border border-slate-200 rounded-xl rounded-tl-sm px-4 py-3 max-w-[85%]">
                 <p className="text-sm text-slate-700 leading-relaxed">
-                  Welcome! I can help you generate professional legal documents. Tell me what you need, or pick one of the suggestions below to get started.
+                  Welcome! Choose a document type below to get started.
                 </p>
               </div>
             </div>
 
-            {/* Suggestion cards */}
+            {/* Suggestion cards — only way to start */}
             <div className="space-y-2 pt-2">
               {SEED_SUGGESTIONS.map((s) => (
                 <button
                   key={s.title}
                   onClick={() => handleSuggestionClick(s)}
-                  className="w-full text-left flex items-center gap-3 px-4 py-3 bg-white border border-slate-200 rounded-xl hover:border-indigo-300 hover:bg-indigo-50/30 transition-all group cursor-pointer"
+                  disabled={isGenerating}
+                  className="w-full text-left flex items-center gap-3 px-4 py-3 bg-white border border-slate-200 rounded-xl hover:border-indigo-300 hover:bg-indigo-50/30 transition-all group cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <span className="text-lg">{s.icon}</span>
                   <div>
@@ -121,27 +126,49 @@ export default function ChatPanel({ messages, onSendMessage, isGenerating }) {
         )}
       </div>
 
-      {/* Input area */}
-      <div className="p-4 border-t border-slate-200 bg-white">
-        <form onSubmit={handleSubmit} className="flex gap-2">
-          <input
-            type="text"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            placeholder="Describe your document..."
-            className="flex-1 px-4 py-2.5 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-300 placeholder:text-slate-400"
-          />
-          <button
-            type="submit"
-            disabled={!input.trim()}
-            className="px-4 py-2.5 bg-indigo-600 text-white text-sm font-medium rounded-xl hover:bg-indigo-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer"
-          >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 19V5m0 0l-7 7m7-7l7 7" />
+      {/* Input area — only visible after document is ready */}
+      {documentReady ? (
+        <div className="p-4 border-t border-slate-200 bg-white relative">
+          {/* Onboarding hint */}
+          {showEditHint && (
+            <div className="absolute -top-16 left-4 right-4 animate-bounce-subtle">
+              <div className="bg-indigo-600 text-white text-xs rounded-lg px-3 py-2 shadow-lg relative">
+                Now you can make changes to your document by typing here
+                <button onClick={onDismissHint} className="ml-2 text-indigo-200 hover:text-white cursor-pointer">✕</button>
+                <div className="absolute bottom-0 left-6 translate-y-full w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-t-[6px] border-t-indigo-600" />
+              </div>
+            </div>
+          )}
+          <form onSubmit={handleSubmit} className="flex gap-2">
+            <input
+              type="text"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onFocus={() => { if (showEditHint && onDismissHint) onDismissHint(); }}
+              placeholder="e.g. Change the termination period to 60 days..."
+              className="flex-1 px-4 py-2.5 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-300 placeholder:text-slate-400"
+            />
+            <button
+              type="submit"
+              disabled={!input.trim() || !chatEnabled}
+              className="px-4 py-2.5 bg-indigo-600 text-white text-sm font-medium rounded-xl hover:bg-indigo-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 19V5m0 0l-7 7m7-7l7 7" />
+              </svg>
+            </button>
+          </form>
+        </div>
+      ) : (
+        <div className="p-4 border-t border-slate-200 bg-slate-50">
+          <div className="flex items-center justify-center gap-2 text-xs text-slate-400 py-2">
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
             </svg>
-          </button>
-        </form>
-      </div>
+            Select a document type above to begin
+          </div>
+        </div>
+      )}
     </div>
   );
 }

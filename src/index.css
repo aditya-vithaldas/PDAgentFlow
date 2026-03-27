@@ -59,6 +59,24 @@
   background: linear-gradient(90deg, transparent 0%, rgba(139,92,246,0.06) 25%, rgba(139,92,246,0.12) 50%, rgba(139,92,246,0.06) 75%, transparent 100%);
   background-size: 200% 100%; animation: shimmer 2s ease-in-out infinite;
 }
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes bounce-subtle {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.4s ease-out;
+}
+
+.animate-bounce-subtle {
+  animation: bounce-subtle 1.5s ease-in-out infinite;
+}
+
 * {
   scrollbar-width: thin;
   scrollbar-color: #d1d5db transparent;
