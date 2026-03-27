@@ -44,7 +44,7 @@ Rules:
 - Write professional, legally-sound document text.
 - Use [PLACEHOLDER_NAME] in ALL-CAPS with underscores for values the user must fill in (e.g. [PARTY_A_NAME], [DATE], [AMOUNT]).
 - Do NOT use markdown headings or bullet points — write flowing paragraph/clause text only.
-- Keep output concise (2-4 short paragraphs max per section).`;
+- Keep output UNDER 50 WORDS. Be extremely concise — short clauses only.`;
 }
 
 /**
