@@ -99,8 +99,8 @@ ${contextSoFar ? `Previously generated sections for context:\n${contextSoFar}\n\
       content = await withMinDelay(callGemini(agentSystemPrompt(section.agent), userPrompt), 3000);
     } catch (err) {
       console.error(`Gemini error for section ${section.title}:`, err);
+      callbacks.onError?.(`Gemini call failed for "${section.title}" — using fallback`);
       content = section.content; // fallback to template
-      await delay(3000); // still wait on error so animation plays
     }
 
     generatedSections.push({ title: section.title, content });
@@ -132,6 +132,7 @@ ${contextSoFar ? `Previously generated sections for context:\n${contextSoFar}\n\
     console.log('Quality review:', reviewResult);
   } catch (err) {
     console.error('Quality review failed:', err);
+    callbacks.onError?.('Quality review failed — skipping verification');
   }
 
   callbacks.onQualityReviewDone();
@@ -185,6 +186,7 @@ Which section index should be edited, and what is the change summary?`
     if (summaryMatch) diffSummary = summaryMatch[1].trim();
   } catch (err) {
     console.error('Chief routing failed, using heuristic fallback:', err);
+    callbacks.onError?.('Chief of Staff routing failed — using heuristic fallback');
     const fallback = matchEditToSectionFallback(editRequest, currentDoc);
     sectionIdx = fallback.sectionIdx;
     diffSummary = fallback.diffSummary;
@@ -217,8 +219,8 @@ Rewrite the section incorporating the user's requested change. Keep the same ove
     ), 3000);
   } catch (err) {
     console.error('Section rewrite failed:', err);
+    callbacks.onError?.('Section rewrite failed — keeping original content');
     newContent = section.content;
-    await delay(3000);
   }
 
   callbacks.onSectionDone(sectionIdx, newContent);
@@ -236,6 +238,7 @@ Rewrite the section incorporating the user's requested change. Keep the same ove
     ), 1500);
   } catch (err) {
     console.error('Quality review of edit failed:', err);
+    callbacks.onError?.('Edit quality review failed — skipping verification');
   }
 
   callbacks.onAgentComplete('quality');
