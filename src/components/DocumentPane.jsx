@@ -3,12 +3,23 @@ import { AGENT_MAP } from '../data/agents';
 
 function TemplateText({ text }) {
   if (!text) return null;
-  const parts = text.split(/(\[[A-Z_]+\])/g);
+  // Split on both [PLACEHOLDER] and <<HIGHLIGHT>>...<<\/HIGHLIGHT>> markers
+  const parts = text.split(/(<<HIGHLIGHT>>[\s\S]*?<<\/HIGHLIGHT>>|\[[A-Z_]+\])/g);
   return (
     <>
       {parts.map((part, i) => {
-        const match = part.match(/^\[([A-Z_]+)\]$/);
-        if (match) return <TemplateField key={i} name={match[1]} />;
+        // Highlight markers from edit flow
+        const hlMatch = part.match(/^<<HIGHLIGHT>>([\s\S]*?)<<\/HIGHLIGHT>>$/);
+        if (hlMatch) {
+          return (
+            <mark key={i} className="bg-yellow-100 text-yellow-900 px-0.5 rounded-sm">
+              {hlMatch[1]}
+            </mark>
+          );
+        }
+        // Placeholder fields
+        const fieldMatch = part.match(/^\[([A-Z_]+)\]$/);
+        if (fieldMatch) return <TemplateField key={i} name={fieldMatch[1]} />;
         return <span key={i}>{part}</span>;
       })}
     </>

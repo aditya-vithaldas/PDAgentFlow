@@ -209,7 +209,9 @@ ${section.content}
 
 User's edit request: "${editRequest}"
 
-Rewrite the section incorporating the user's requested change. Keep the same overall structure and [PLACEHOLDER] format. Output only the revised section text, no heading.`
+Rewrite the section incorporating the user's requested change. Keep the same overall structure and [PLACEHOLDER] format. Output only the revised section text, no heading.
+
+IMPORTANT: Wrap any changed or new text with <<HIGHLIGHT>> and <</HIGHLIGHT>> markers so we can visually highlight edits. Only wrap the parts that actually changed, not the entire section.`
     ), 1500);
   } catch (err) {
     console.error('Section rewrite failed:', err);

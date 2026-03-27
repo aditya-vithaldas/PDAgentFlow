@@ -1,5 +1,21 @@
 import { useState } from 'react';
 
+function FormattedText({ text }) {
+  if (!text) return null;
+  // Handle **bold** and \n
+  const parts = text.split(/(\*\*[^*]+\*\*|\n)/g);
+  return (
+    <>
+      {parts.map((part, i) => {
+        if (part === '\n') return <br key={i} />;
+        const bold = part.match(/^\*\*(.+)\*\*$/);
+        if (bold) return <strong key={i} className="font-semibold">{bold[1]}</strong>;
+        return <span key={i}>{part}</span>;
+      })}
+    </>
+  );
+}
+
 const SEED_SUGGESTIONS = [
   {
     title: 'Generate an NDA',
@@ -113,7 +129,7 @@ export default function ChatPanel({ messages, onSendMessage, isGenerating, docum
                   : 'bg-white border border-slate-200 text-slate-700 rounded-tl-sm'
               }`}
             >
-              {msg.content}
+              <FormattedText text={msg.content} />
             </div>
           </div>
         ))}
