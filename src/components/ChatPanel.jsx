@@ -62,6 +62,16 @@ export default function ChatPanel({ messages, onSendMessage, isGenerating, docum
               </div>
             </div>
 
+            {/* Floating hint pointing to options */}
+            {!documentReady && !isGenerating && (
+              <div className="animate-bounce-subtle">
+                <div className="bg-indigo-600 text-white text-xs rounded-lg px-3 py-2 shadow-lg relative inline-block">
+                  Select one of these to generate your document
+                  <div className="absolute bottom-0 left-6 translate-y-full w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-t-[6px] border-t-indigo-600" />
+                </div>
+              </div>
+            )}
+
             {/* Suggestion cards — only way to start */}
             <div className="space-y-2 pt-2">
               {SEED_SUGGESTIONS.map((s) => (

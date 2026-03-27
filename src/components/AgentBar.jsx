@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { AGENTS } from '../data/agents';
 
 function AgentInfoPopover({ agent, onClose }) {
@@ -37,58 +37,25 @@ function AgentInfoPopover({ agent, onClose }) {
 
 // Agent states: 'idle' | 'active' | 'complete'
 export default function AgentBar({ activeAgents, completedAgents = [], activeTask }) {
-  const [expanded, setExpanded] = useState(false);
   const [openPopover, setOpenPopover] = useState(null);
-
-  const hasActivity = activeAgents.length > 0 || completedAgents.length > 0;
-
-  // Auto-expand when agents become active (e.g. during edits)
-  useEffect(() => {
-    if (activeAgents.length > 0) setExpanded(true);
-  }, [activeAgents]);
 
   return (
     <div className="bg-slate-800 border-b border-slate-700 relative z-20 overflow-visible">
-      {/* Collapsed bar — always visible */}
-      <div className="flex items-center justify-between px-4 py-2.5">
-        <div className="flex items-center gap-2 min-w-0">
-          <svg className="w-4 h-4 text-slate-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 014.5 0m0 0v5.714a2.25 2.25 0 00.659 1.591L19 14.5M14.25 3.104c.251.023.501.05.75.082M19 14.5l-2.47-2.47" />
-          </svg>
-          {activeTask ? (
-            <p className="text-xs text-slate-300 truncate">
-              <span className="text-slate-500 mr-1">Agent:</span>{activeTask}
-            </p>
-          ) : hasActivity ? (
-            <p className="text-xs text-slate-400">
-              {completedAgents.length} agent{completedAgents.length !== 1 ? 's' : ''} completed
-            </p>
-          ) : (
-            <p className="text-xs text-slate-500">Agents standing by</p>
-          )}
-          {activeAgents.length > 0 && (
-            <span className="relative flex h-2 w-2 flex-shrink-0">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75" />
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-indigo-500" />
-            </span>
-          )}
+      {/* Status line */}
+      {activeTask && (
+        <div className="flex items-center gap-2 px-4 py-2 border-b border-slate-700/50">
+          <span className="relative flex h-2 w-2 flex-shrink-0">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75" />
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-indigo-500" />
+          </span>
+          <p className="text-xs text-slate-300 truncate">{activeTask}</p>
         </div>
-        <button
-          onClick={() => setExpanded(!expanded)}
-          className="text-[10px] font-medium text-indigo-400 hover:text-indigo-300 transition-colors cursor-pointer flex items-center gap-1 flex-shrink-0"
-        >
-          {expanded ? 'Hide' : 'See what your agents are doing'}
-          <svg className={`w-3 h-3 transition-transform ${expanded ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-          </svg>
-        </button>
-      </div>
+      )}
 
-      {/* Expanded agent diagnostic panel */}
-      {expanded && (
-        <div className="px-4 pb-3 pt-1 border-t border-slate-700/50 animate-fade-in">
-          <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-2">Agent Diagnostic</p>
-          <div className="flex items-center gap-2 flex-wrap">
+      {/* Agent pills — always visible */}
+      <div className="px-4 py-2.5">
+        <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-2">Agent Diagnostic</p>
+        <div className="flex items-center gap-2 flex-wrap">
             {AGENTS.map((agent) => {
               const isActive = activeAgents.includes(agent.id);
               const isComplete = completedAgents.includes(agent.id);
@@ -157,7 +124,6 @@ export default function AgentBar({ activeAgents, completedAgents = [], activeTas
             })}
           </div>
         </div>
-      )}
     </div>
   );
 }
