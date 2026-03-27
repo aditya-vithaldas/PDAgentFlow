@@ -2,9 +2,13 @@ import { TEMPLATES } from '../data/templates';
 import { AGENT_MAP } from '../data/agents';
 import { callGemini } from './gemini';
 
+function delay(ms) {
+  return new Promise((r) => setTimeout(r, ms));
+}
+
 /** Run a promise but ensure at least `ms` milliseconds pass before resolving. */
 function withMinDelay(promise, ms) {
-  return Promise.all([promise, new Promise((r) => setTimeout(r, ms))]).then(([result]) => result);
+  return Promise.all([promise, delay(ms)]).then(([result]) => result);
 }
 
 function detectTemplate(input) {
@@ -62,7 +66,9 @@ export async function runGeneration(input, callbacks) {
   for (let i = 0; i < doc.sections.length; i++) {
     const section = template.sections[i];
 
+    // Show agent activation for 800ms before starting the work
     callbacks.onActiveAgent(section.agent, section.agentTask);
+    await delay(800);
     callbacks.onSectionStart(i);
 
     const contextSoFar = generatedSections
@@ -77,9 +83,8 @@ User's request: "${input}"
 ${contextSoFar ? `Previously generated sections for context:\n${contextSoFar}\n\n` : ''}Write the content for this section now. Output only the section text, no heading.`;
 
     let content;
-    const sectionDelay = 1500 + Math.random() * 1000; // 1.5–2.5s minimum
     try {
-      content = await withMinDelay(callGemini(agentSystemPrompt(section.agent), userPrompt), sectionDelay);
+      content = await withMinDelay(callGemini(agentSystemPrompt(section.agent), userPrompt), 2500);
     } catch (err) {
       console.error(`Gemini error for section ${section.title}:`, err);
       content = section.content; // fallback to template
@@ -89,10 +94,18 @@ ${contextSoFar ? `Previously generated sections for context:\n${contextSoFar}\n\
 
     callbacks.onSectionDone(i, content);
     callbacks.onAgentComplete(section.agent);
+
+    // Pause between sections so the user sees each completion
+    await delay(600);
   }
+
+  // Clear active agent briefly before quality review
+  callbacks.onActiveAgent(null, null);
+  await delay(500);
 
   // Phase 2: Quality Review — full-document verification
   callbacks.onActiveAgent('quality', 'Reviewing full document for consistency, contradictions, and completeness');
+  await delay(600);
   callbacks.onQualityReviewStart();
 
   const fullDoc = generatedSections.map((gs) => `### ${gs.title}\n${gs.content}`).join('\n\n');
@@ -166,10 +179,12 @@ Which section index should be edited, and what is the change summary?`
   if (!diffSummary) diffSummary = `Revised section based on: "${editRequest}"`;
 
   callbacks.onAgentComplete('chief');
+  await delay(800);
 
   // Phase 2: Specialist agent rewrites the section
   const section = currentDoc.sections[sectionIdx];
   callbacks.onActiveAgent(section.agent, `Rewriting: ${section.title}`);
+  await delay(600);
   callbacks.onSectionStart(sectionIdx);
 
   let newContent;
@@ -185,7 +200,7 @@ ${section.content}
 User's edit request: "${editRequest}"
 
 Rewrite the section incorporating the user's requested change. Keep the same overall structure and [PLACEHOLDER] format. Output only the revised section text, no heading.`
-    ), 2000);
+    ), 2500);
   } catch (err) {
     console.error('Section rewrite failed:', err);
     newContent = section.content; // keep original on failure
@@ -193,6 +208,7 @@ Rewrite the section incorporating the user's requested change. Keep the same ove
 
   callbacks.onSectionDone(sectionIdx, newContent);
   callbacks.onAgentComplete(section.agent);
+  await delay(600);
 
   // Phase 3: Quality review of the change
   callbacks.onActiveAgent('quality', `Verifying edit in "${section.title}"`);
