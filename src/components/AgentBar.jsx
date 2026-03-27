@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { AGENTS } from '../data/agents';
 
 function AgentInfoPopover({ agent, onClose }) {
@@ -32,6 +32,11 @@ export default function AgentBar({ activeAgents, completedAgents = [], activeTas
   const [openPopover, setOpenPopover] = useState(null);
 
   const hasActivity = activeAgents.length > 0 || completedAgents.length > 0;
+
+  // Auto-expand when agents become active (e.g. during edits)
+  useEffect(() => {
+    if (activeAgents.length > 0) setExpanded(true);
+  }, [activeAgents]);
 
   return (
     <div className="bg-slate-800 border-b border-slate-700 relative z-20 overflow-visible">
